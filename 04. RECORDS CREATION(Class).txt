@@ -1,0 +1,68 @@
+CLASS zar_001_c DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+ENDCLASS.
+
+
+CLASS  zar_001_c IMPLEMENTATION.
+
+  METHOD if_oo_adt_classrun~main.
+
+    DATA:itab TYPE TABLE OF zar_001_t.
+
+*   fill internal travel table (itab)
+    itab = VALUE #(
+  (
+  orders          = '5000000011'
+  order_type      = 'S'
+  partner_id      = '000003'
+  partner_type    = 'V'
+  matnr   = '0000121211'
+  MAKTX = 'Cashew'
+  quantity        = '5'
+  uom             = 'KG'
+  amount          = '1500.00'
+  curc            = 'INR'
+  approval_status = 'I'
+  created_by = 'CB9980000423'
+  created_at = '20200310105654.4296640'
+  last_changed_by = 'CB9980000423'
+  last_changed_at = '20200310111041.2251330' )
+  (
+  orders          = '5000000012'
+  order_type      = 'S'
+  partner_id      = '000004'
+  partner_type    = 'V'
+  matnr   = '0000121212'
+  MAKTX = 'Almond'
+  quantity        = '5'
+  uom             = 'KG'
+  amount          = '1900.00'
+  curc            = 'INR'
+  approval_status = 'I'
+  created_by = 'CB9980000423'
+  created_at = '20200310105654.4296640'
+  last_changed_by = 'CB9980000423'
+  last_changed_at = '20200310111041.2251330' )
+ ).
+
+*   delete existing entries in the database table
+    DELETE FROM zar_001_t.
+
+*   insert the new table entries
+    INSERT zar_001_t FROM TABLE @itab.
+
+*   check the result
+    SELECT * FROM zar_001_t INTO TABLE @itab.
+    out->write( sy-dbcnt ).
+    out->write( 'Order data inserted successfully!').
+
+  ENDMETHOD.
+
+ENDCLASS.

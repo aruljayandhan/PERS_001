@@ -1,0 +1,135 @@
+CLASS lhc_Order DEFINITION INHERITING FROM cl_abap_behavior_handler.
+  PRIVATE SECTION.
+
+    METHODS :
+      getArrivalDate       FOR DETERMINE ON MODIFY IMPORTING keys FOR Order~getArrivalDate,
+      validate_customer    FOR VALIDATION Order~validateCustomer IMPORTING keys FOR Order,
+      set_status_completed FOR MODIFY   IMPORTING keys FOR ACTION Order~acceptOrder RESULT result,
+      get_features         FOR FEATURES IMPORTING keys REQUEST requested_features FOR Order RESULT result.
+
+ENDCLASS.
+
+
+CLASS lhc_Order IMPLEMENTATION.
+
+  METHOD getArrivalDate.
+
+    LOOP AT keys INTO DATA(ls_key).
+
+      MODIFY ENTITIES OF zar_001_dd IN LOCAL MODE
+      ENTITY Order
+      UPDATE SET FIELDS WITH VALUE #( (
+      Orders          = ls_key-orders
+      approval_status = 'I'
+      arrival_date    =  cl_abap_context_info=>get_system_date( ) + 7  ) )
+      REPORTED DATA(ls_reported).
+
+
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD validate_customer.
+
+    READ ENTITY zar_001_dd\\Order FROM VALUE #(
+    FOR <root_key> IN keys
+    ( %key     = <root_key>
+      %control = VALUE #( partner_id = if_abap_behv=>mk-on ) ) )
+     RESULT DATA(lt_order).
+
+    DATA lt_customer TYPE SORTED TABLE OF /dmo/customer WITH UNIQUE KEY customer_id.
+
+    "Optimization of DB select: extract distinct non-initial customer IDs
+    lt_customer = CORRESPONDING #( lt_order DISCARDING DUPLICATES MAPPING customer_id  = partner_id EXCEPT * ).
+    DELETE lt_customer WHERE customer_id IS INITIAL.
+    CHECK lt_customer IS NOT INITIAL.
+
+    "Check if customer ID exist
+    SELECT FROM /dmo/customer FIELDS customer_id
+    FOR ALL ENTRIES IN @lt_customer
+    WHERE
+    customer_id = @lt_customer-customer_id
+    INTO TABLE @DATA(lt_customer_db).
+
+    "Raise msg for non existing customer id
+    LOOP AT lt_order INTO DATA(ls_order).
+      IF ls_order-partner_id IS NOT INITIAL AND
+      NOT line_exists( lt_customer_db[ customer_id = ls_order-partner_id ] ).
+        APPEND VALUE #(  orders = ls_order-orders ) TO failed.
+        APPEND VALUE #(  orders = ls_order-orders
+                         %msg  = new_message(
+                         id       = /dmo/cx_flight_legacy=>customer_unkown-msgid
+                         number   = /dmo/cx_flight_legacy=>customer_unkown-msgno
+                         v1       = ls_order-partner_id
+                         severity = if_abap_behv_message=>severity-error )
+                         %element-partner_id = if_abap_behv=>mk-on ) TO reported.
+      ENDIF.
+
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD set_status_completed.
+
+    " Modify in local mode: BO-related updates that are not relevant for authorization checks
+    MODIFY ENTITIES OF zar_001_dd IN LOCAL MODE
+    ENTITY order
+    UPDATE FROM VALUE #(
+    FOR key IN keys (
+    orders                   = key-orders
+    approval_status           = 'A' " Accepted
+    %control-approval_status = if_abap_behv=>mk-on ) )
+    FAILED   failed
+    REPORTED reported.
+
+    " Read changed data for action result
+    READ ENTITIES OF zar_001_dd IN LOCAL MODE
+    ENTITY order
+    FROM VALUE #( FOR key IN keys (
+    orders = key-orders
+    %control = VALUE #(
+      order_type      = if_abap_behv=>mk-on
+      partner_id      = if_abap_behv=>mk-on
+      partner_type    = if_abap_behv=>mk-on
+      matnr           = if_abap_behv=>mk-on
+      maktx           = if_abap_behv=>mk-on
+      quantity        = if_abap_behv=>mk-on
+      uom             = if_abap_behv=>mk-on
+      amount          = if_abap_behv=>mk-on
+      curc            = if_abap_behv=>mk-on
+      approval_status = if_abap_behv=>mk-on
+      arrival_date    = if_abap_behv=>mk-on
+      created_by      = if_abap_behv=>mk-on
+      created_at      = if_abap_behv=>mk-on
+      last_changed_by = if_abap_behv=>mk-on
+      last_changed_at = if_abap_behv=>mk-on
+   ) ) ) RESULT DATA(lt_order).
+
+
+    result = VALUE #(
+    FOR order IN lt_order ( orders = order-orders %param    = order ) ).
+
+  ENDMETHOD.
+
+  METHOD get_features.
+
+    READ ENTITY
+    zar_001_dd
+    FROM VALUE #( FOR key IN keys
+    (  %key = key-%key
+       %control-orders = if_abap_behv=>mk-on
+       %control-approval_status = if_abap_behv=>mk-on ) )
+    RESULT DATA(lt_order_result).
+
+
+    result =
+    VALUE #( FOR ls_order IN lt_order_result
+    ( %key = ls_order-%key
+      %features-%action-acceptOrder =
+      COND #( WHEN ls_order-approval_status = 'A'
+              THEN if_abap_behv=>fc-o-disabled ELSE if_abap_behv=>fc-o-enabled   )
+     ) ).
+
+  ENDMETHOD.
+
+ENDCLASS.

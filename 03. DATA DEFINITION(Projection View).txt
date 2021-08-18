@@ -1,0 +1,114 @@
+@AccessControl.authorizationCheck: #CHECK
+@EndUserText.label: 'By ArulPrasath'
+
+@UI: {
+headerInfo: { typeName: 'Order', typeNamePlural: 'Order(s)', title: { type: #STANDARD, value: 'orders' } } }
+
+@Search.searchable: true
+
+define root view entity ZAR_002_DD
+  as projection on ZAR_001_DD
+{
+
+      //#1
+      @UI.facet: [ { id:              'orders',
+                     purpose:         #STANDARD,
+                     type:            #IDENTIFICATION_REFERENCE,
+                     label:           'Order Detail',
+                     position:        1 } ]
+  key orders              as orders,
+
+      //#2
+      @UI: {
+          lineItem:       [ { position: 2, importance: #HIGH } ],
+          identification: [ { position: 2, label: 'Order Type [S(Sale Order)|P(Purchase Order)]' } ]
+           }
+      @Search.defaultSearchElement: true
+      order_type          as orderType,
+
+      //#3
+      @UI: {
+         lineItem:       [ { position: 3, importance: #HIGH } ],
+         identification: [ { position: 3 } ],
+         selectionField: [ { position: 3 } ] }
+      @Consumption.valueHelpDefinition: [{ entity : {name: '/DMO/I_Customer', element: 'CustomerID'  } }]
+      @ObjectModel.text.element: ['partnerDescription']
+      @Search.defaultSearchElement: true
+      partner_id          as PartnerID,
+
+      //#4
+      @UI: {
+          lineItem:       [ { position: 4, importance: #HIGH } ],
+          identification: [ { position: 4, label: 'Partner Type[V(Vendor)|C(Customer)' } ]
+           }
+      partner_type        as partnerType,
+
+      //#5
+      @UI: {
+      lineItem:       [ { position: 5, importance: #HIGH } ],
+      identification: [ { position: 5, label: 'Partner Description' } ]
+      }
+      _Customer.FirstName as partnerDescription,
+
+      //#6
+      @UI: {
+      lineItem:       [ { position: 6, importance: #HIGH } ],
+      identification: [ { position: 6, label: 'Material Code' } ]
+      }
+      matnr               as material,
+
+      //#7
+      @UI: {
+      lineItem:       [ { position: 7, importance: #HIGH } ],
+      identification: [ { position: 7, label: 'Material Description' } ]
+      }
+      maktx               as materialDescription,
+
+      //#8
+      @UI: {
+          lineItem:       [ { position: 8, importance: #MEDIUM } ],
+          identification: [ { position: 8, label: 'Quantity' } ] }
+      @Semantics.quantity.unitOfMeasure: 'uom'
+      quantity,
+
+      //#9
+      @UI: {
+      lineItem:       [ { position: 9, importance: #MEDIUM } ],
+      identification: [ { position: 9, label: 'UOM' } ] }
+      uom,
+
+      //#10
+      @UI: {
+          lineItem:       [ { position: 10, importance: #MEDIUM } ],
+          identification: [ { position: 10, label: 'Total Price' } ] }
+      @Semantics.amount.currencyCode: 'CurrencyCode'
+      amount              as Amount,
+
+      //#11
+      @UI: {
+      lineItem:       [ { position: 11, importance: #MEDIUM } ],
+      identification: [ { position: 11, label: 'Currency' } ] }
+      @Consumption.valueHelpDefinition: [{entity: {name: 'I_Currency', element: 'Currency' }}]
+      curc                as CurrencyCode,
+
+      //#12
+      @UI: {
+            lineItem:       [ { position: 12, importance: #HIGH },
+                              { type: #FOR_ACTION, dataAction: 'acceptOrder', label: 'Accept Order' } ],
+          identification: [ { position: 12, label: 'Status [I(Init)|A(Accepted)|R(Rejected)]' } ]  }
+      approval_status     as approval_status,
+
+      //#13
+      @UI: {
+      lineItem:       [ { position: 13, importance: #MEDIUM } ],
+      identification: [ { position: 13, label: 'Arrival Date' } ] }
+      arrival_date,
+
+      //#14
+      //      @UI.hidden: true
+      @UI: {
+      lineItem:       [ { position: 14, importance: #MEDIUM } ],
+      identification: [ { position: 14, label: 'Last Changed At' } ] }
+      last_changed_at     as LastChangedAt
+
+}

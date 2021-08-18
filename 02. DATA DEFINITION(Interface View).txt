@@ -1,0 +1,55 @@
+@AbapCatalog.sqlViewName: 'ZAR_001_VI'
+@AbapCatalog.compiler.compareFilter: true
+@AbapCatalog.preserveKey: true
+@AccessControl.authorizationCheck: #CHECK
+@EndUserText.label: 'By ArulPrasath'
+define root view ZAR_001_DD
+  as select from zar_001_t
+
+  association [0..1] to /DMO/I_Customer as _Customer on $projection.partner_id = _Customer.CustomerID
+  association [0..1] to I_Currency      as _Currency on $projection.curc = _Currency.Currency
+
+{
+
+  key orders,
+      @EndUserText.label : 'Order Type'
+      order_type,
+      @EndUserText.label : 'Partner ID'
+      partner_id,
+      @EndUserText.label : 'Partner Type'
+      partner_type,
+      @Semantics.text: true
+      @EndUserText.label : 'Material Code'
+      cast( matnr as char18) as matnr,
+      @EndUserText.label : 'Material Description'
+      maktx,
+      @EndUserText.label : 'Order Quantity'
+      @Semantics.quantity.unitOfMeasure : 'uom'
+      quantity,
+      @EndUserText.label : 'UOM'
+      uom,
+      @EndUserText.label : 'Total Amount'
+      @Semantics.amount.currencyCode : 'curc'
+      amount,
+      @EndUserText.label : 'Currency'
+      @Semantics.currencyCode: true
+      curc,
+      @EndUserText.label : 'Approval Status'
+      approval_status,
+      @EndUserText.label : 'Arrival Date'
+      arrival_date,
+      /*-- Admin data --*/
+      @Semantics.user.createdBy: true
+      created_by,
+      @Semantics.systemDateTime.createdAt: true
+      created_at,
+      @Semantics.user.lastChangedBy: true
+      last_changed_by,
+      @Semantics.systemDateTime.lastChangedAt: true
+      last_changed_at,
+
+      /* Public associations */
+      _Customer,
+      _Currency
+
+}

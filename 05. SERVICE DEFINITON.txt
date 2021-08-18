@@ -1,0 +1,7 @@
+@EndUserText.label: 'By ArulPrasath'
+define service ZAR_001_SD {
+  expose ZAR_002_DD as OrderProcessor;
+  expose /DMO/I_Customer as PartnerID;
+  expose I_Currency as Currency;
+  expose I_Country as Country;
+}

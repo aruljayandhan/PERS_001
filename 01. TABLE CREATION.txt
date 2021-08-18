@@ -1,0 +1,27 @@
+@EndUserText.label : 'Table For Partner Orders'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #A
+@AbapCatalog.dataMaintenance : #RESTRICTED
+define table zar_001_t {
+  key client      : abap.clnt not null;
+  key orders      : sysuuid_x16 not null;
+  order_type      : char1;
+  partner_id      : /dmo/customer_id;
+  partner_type    : char1;
+  matnr           : matnr;
+  maktx           : char40;
+  @Semantics.quantity.unitOfMeasure : 'zar_001_t.uom'
+  quantity        : menge_d;
+  uom             : meins;
+  @Semantics.amount.currencyCode : 'zar_001_t.curc'
+  amount          : /dmo/booking_fee;
+  curc            : waers_curc;
+  arrival_date    : /dmo/begin_date;
+  approval_status : char1;
+  created_by      : syuname;
+  created_at      : timestampl;
+  last_changed_by : syuname;
+  last_changed_at : timestampl;
+
+}

@@ -1,0 +1,14 @@
+projection;
+
+define behavior for ZAR_002_DD alias OrderProcessor
+use etag
+{
+  // scenario specific field control
+  field ( mandatory ) PartnerID, partnerType ;
+
+  use create;
+  use update;
+  use delete;
+
+    use action acceptOrder;
+}

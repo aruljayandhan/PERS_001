@@ -1,0 +1,24 @@
+managed implementation in class zbp_ar_001_dd unique;
+//strict; //Comment this line in to enable strict mode. The strict mode is prerequisite to be future proof regarding syntax and to be able to release your BO.
+
+define behavior for ZAR_001_DD alias order
+persistent table zar_001_t
+etag master last_changed_at
+lock master
+authorization master ( instance )
+{
+  field ( readonly, numbering : managed ) orders;
+  field ( readonly )  last_changed_at, last_changed_by, created_at, created_by, arrival_date, approval_status;
+  field ( mandatory ) order_type, partner_id, matnr, maktx, quantity, uom, amount, curc;
+
+
+  // instance action and dynamic action control
+  action ( features : instance ) acceptOrder result [1] $self;
+  // validations
+  validation validateCustomer on save { field partner_id; }
+
+  create;
+  update;
+  delete;
+  determination getArrivalDate on modify { create; }
+}
